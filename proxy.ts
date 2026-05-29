@@ -38,6 +38,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/home', request.url));
   }
 
+  // Pass user ID to page functions via header so they skip getSession()
+  if (user?.id) {
+    supabaseResponse.headers.set('x-user-id', user.id);
+  }
+
   return supabaseResponse;
 }
 
