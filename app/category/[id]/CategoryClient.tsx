@@ -318,7 +318,7 @@ export function CategoryClient({ category, levels, userProgress, language, userI
               ) : (
                 <motion.div
                   key="welcome"
-                  initial={{ opacity: 0, y: 14 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -14 }}
                   transition={{ duration: 0.25 }}

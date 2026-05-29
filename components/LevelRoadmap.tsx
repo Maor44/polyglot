@@ -180,9 +180,9 @@ export function LevelRoadmap({ levels, progress, categoryColor, onSelectLevel, a
               {/* CTA */}
               {!isLocked && !isActive && (
                 <motion.div
-                  initial={{ opacity: 0, x: -8 }}
+                  initial={false}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: entryDelay + 0.25 }}
+                  transition={{ duration: 0.15 }}
                   className="shrink-0 rounded-xl px-3.5 py-2 text-xs font-black text-white shadow-sm"
                   style={{
                     background: `linear-gradient(135deg, ${categoryColor}cc, ${categoryColor})`,
