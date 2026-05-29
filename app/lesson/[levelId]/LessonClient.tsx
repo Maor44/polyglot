@@ -24,12 +24,16 @@ interface Props {
   levelLabel: string;
   categoryName: string;
   categoryEmoji: string;
+  inline?: boolean;
+  onClose?: () => void;
+  onRestart?: () => void;
+  onFinish?: (score: number) => void;
 }
 
 const XP_PER_CORRECT = 10;
 const MAX_HEARTS = 3;
 
-export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale, levelLabel, categoryName, categoryEmoji }: Props) {
+export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale, levelLabel, categoryName, categoryEmoji, inline, onClose, onRestart, onFinish }: Props) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hearts, setHearts] = useState(MAX_HEARTS);
@@ -99,6 +103,7 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
     setFinalScore(score);
     if (score >= 70) setShowConfetti(true);
     setFinished(true);
+    onFinish?.(score);
 
     if (userId && levelId !== 'ai') {
       try {
@@ -110,13 +115,17 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
         ]);
       } catch {}
     }
-  }, [correctCount, total, userId, levelId, languageId, xp]);
+  }, [correctCount, total, userId, levelId, languageId, xp, onFinish]);
 
   const getStars = (score: number) => score >= 90 ? 3 : score >= 80 ? 2 : score >= 60 ? 1 : 0;
 
+  const centerClass = inline
+    ? 'h-full flex flex-col items-center justify-center p-8 bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20'
+    : 'min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20';
+
   if (gameOver) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20">
+      <div className={centerClass}>
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -127,13 +136,16 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
           <p className="text-muted-foreground mb-6">נגמרו הלבבות. נסה שוב!</p>
           <motion.button
             whileTap={{ scale: 0.96 }}
-            onClick={() => router.refresh()}
+            onClick={() => inline ? onRestart?.() : router.refresh()}
             className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-2xl font-black text-lg shadow-lg mb-3"
           >
             🔄 נסה שוב
           </motion.button>
-          <button onClick={() => router.push('/home')} className="text-sm text-muted-foreground hover:text-foreground">
-            חזרה הביתה
+          <button
+            onClick={() => inline ? onClose?.() : router.push('/home')}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            {inline ? 'חזרה לרמות' : 'חזרה הביתה'}
           </button>
         </motion.div>
       </div>
@@ -143,7 +155,7 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
   if (finished) {
     const stars = getStars(finalScore);
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className={inline ? 'h-full flex flex-col items-center justify-center p-8' : 'min-h-screen flex items-center justify-center p-4'}>
         <ConfettiCelebration trigger={showConfetti} intensity="full" />
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -170,7 +182,7 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
             {finalScore < 60 && (
               <motion.button
                 whileTap={{ scale: 0.96 }}
-                onClick={() => router.refresh()}
+                onClick={() => inline ? onRestart?.() : router.refresh()}
                 className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-black shadow-lg"
               >
                 🔄 שחק שוב
@@ -179,17 +191,17 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
             {finalScore >= 60 && (
               <motion.button
                 whileTap={{ scale: 0.96 }}
-                onClick={() => router.back()}
+                onClick={() => inline ? onClose?.() : router.back()}
                 className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl font-black shadow-lg"
               >
-                ➡️ שיעור הבא
+                {inline ? '✓ חזרה לרמות' : '➡️ שיעור הבא'}
               </motion.button>
             )}
             <button
-              onClick={() => router.push('/home')}
+              onClick={() => inline ? onClose?.() : router.push('/home')}
               className="w-full py-3 border-2 border-border rounded-2xl font-bold text-sm hover:bg-muted transition-colors"
             >
-              🏠 חזרה הביתה
+              {inline ? '← חזרה לרמות' : '🏠 חזרה הביתה'}
             </button>
           </div>
         </motion.div>
@@ -198,63 +210,74 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
   }
 
   const exercise = exercises[currentIndex];
+  const exerciseMaxWidth = inline ? 'max-w-2xl' : 'max-w-lg';
 
   return (
-    <div className="min-h-screen flex flex-col pb-6">
+    <div className={`${inline ? 'h-full' : 'min-h-screen'} flex flex-col`}>
       <XpPopup show={showXpPopup} amount={XP_PER_CORRECT} />
 
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-card/95 backdrop-blur border-b border-border px-4 py-3">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-center justify-between mb-2">
-            <button onClick={() => router.back()} className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-lg" aria-label="חזרה">
-              ✕
-            </button>
-            <div className="text-center">
-              <p className="text-xs text-muted-foreground font-medium">{categoryEmoji} {categoryName}</p>
-              <p className="text-xs text-muted-foreground">{currentIndex + 1} / {total}</p>
+      {/* ── Header — pinned to top of panel, full width ── */}
+      <div className="shrink-0 z-10 bg-card/95 backdrop-blur border-b border-border px-5 py-3">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => inline ? onClose?.() : router.back()}
+            className="shrink-0 w-9 h-9 rounded-full bg-muted flex items-center justify-center text-base hover:bg-muted/80 transition-colors"
+            aria-label="סגור"
+          >
+            ✕
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold text-muted-foreground truncate">
+                {categoryEmoji} {categoryName}
+              </span>
+              <span className="text-xs font-bold text-yellow-600 shrink-0 mr-2">{xp} XP ⭐</span>
             </div>
-            <HeartDisplay hearts={hearts} maxHearts={MAX_HEARTS} />
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">{currentIndex + 1} / {total}</p>
           </div>
-          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"
-            />
+
+          <div className="shrink-0">
+            <HeartDisplay hearts={hearts} maxHearts={MAX_HEARTS} />
           </div>
         </div>
       </div>
 
-      {/* Exercise */}
-      <div className="flex-1 max-w-lg mx-auto w-full px-4 pt-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            transition={{ duration: 0.2 }}
-          >
-            {exercise.type === 'mc' && (
-              <MultipleChoice exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
-            )}
-            {exercise.type === 'matching' && (
-              <MatchingPairs exercise={exercise} ttsLocale={ttsLocale} onComplete={handleCorrect} onWrong={handleMatchingWrong} />
-            )}
-            {exercise.type === 'fill' && (
-              <FillBlank exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
-            )}
-            {exercise.type === 'build' && (
-              <SentenceBuilder exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* XP counter */}
-      <div className="max-w-lg mx-auto w-full px-4 pt-4 flex justify-center">
-        <span className="text-sm font-bold text-yellow-600">{xp} XP ⭐</span>
+      {/* ── Exercise — fills remaining height, centers when small, scrolls when tall ── */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full flex flex-col items-center justify-center px-6 py-8">
+          <div className={`w-full ${exerciseMaxWidth}`}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, x: 24 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -24 }}
+                transition={{ duration: 0.18 }}
+              >
+                {exercise.type === 'mc' && (
+                  <MultipleChoice exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
+                )}
+                {exercise.type === 'matching' && (
+                  <MatchingPairs exercise={exercise} ttsLocale={ttsLocale} onComplete={handleCorrect} onWrong={handleMatchingWrong} />
+                )}
+                {exercise.type === 'fill' && (
+                  <FillBlank exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
+                )}
+                {exercise.type === 'build' && (
+                  <SentenceBuilder exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </div>
   );

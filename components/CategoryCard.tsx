@@ -20,15 +20,12 @@ export function CategoryCard({ id, name_he, emoji, color, completedCount, totalL
   const hasProgress = completedCount > 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: index * 0.05, type: 'spring', stiffness: 240, damping: 22 }}
-      whileHover={{ y: -5, scale: 1.03 }}
-      whileTap={{ scale: 0.96 }}
-      className="group"
-    >
-      <Link href={`/category/${id}`} className="block h-full">
+    <Link href={`/category/${id}`} className="block h-full group" prefetch={true}>
+      <motion.div
+        whileHover={{ y: -5, scale: 1.03 }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 240, damping: 22 }}
+      >
         <div
           className="relative rounded-3xl overflow-hidden h-full min-h-[168px] cursor-pointer"
           style={{
@@ -90,7 +87,7 @@ export function CategoryCard({ id, name_he, emoji, color, completedCount, totalL
             </div>
           </div>
         </div>
-      </Link>
-    </motion.div>
+      </motion.div>
+    </Link>
   );
 }

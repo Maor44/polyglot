@@ -25,9 +25,9 @@ function StarRow({ stars, entryDelay }: { stars: number; entryDelay: number }) {
       {[1, 2, 3].map(s => (
         <motion.span
           key={s}
-          initial={{ scale: 0, rotate: -30 }}
+          initial={false}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: entryDelay + s * 0.08, type: 'spring', stiffness: 500, damping: 18 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 18 }}
           className="text-base leading-none select-none"
           style={
             s <= stars
@@ -122,9 +122,9 @@ export function LevelRoadmap({ levels, progress, categoryColor, onSelectLevel, a
             <div className="flex items-center gap-3 p-4">
               {/* Badge */}
               <motion.div
-                initial={{ scale: 0.6, opacity: 0 }}
+                initial={false}
                 animate={{ scale: 1, opacity: isLocked ? 0.45 : 1 }}
-                transition={{ delay: entryDelay + 0.1, type: 'spring', stiffness: 360, damping: 22 }}
+                transition={{ type: 'spring', stiffness: 360, damping: 22 }}
                 className="shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center shadow-md"
                 style={
                   isLocked
@@ -215,9 +215,9 @@ export function LevelRoadmap({ levels, progress, categoryColor, onSelectLevel, a
             {i > 0 && <Connector unlocked={!isLocked} color={categoryColor} />}
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: entryDelay, type: 'spring', stiffness: 280, damping: 26 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 26 }}
             >
               {onSelectLevel ? (
                 <button
