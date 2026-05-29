@@ -24,13 +24,24 @@ function randomChoice<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function tooSimilar(a: string, b: string): boolean {
+  const norm = (s: string) => s.trim().toLowerCase();
+  const na = norm(a), nb = norm(b);
+  return na === nb || na.includes(nb) || nb.includes(na);
+}
+
 function createMCExercise(
   item: VocabularyItem,
   allItems: VocabularyItem[],
   direction: 'target2he' | 'he2target' = 'target2he'
 ): MCExercise {
-  const others = allItems.filter(i => i.id !== item.id);
-  const distractors = sample(others, 3);
+  const correct = direction === 'target2he' ? item.he : item.target_text;
+  const others = allItems.filter(i => {
+    if (i.id === item.id) return false;
+    const candidate = direction === 'target2he' ? i.he : i.target_text;
+    return !tooSimilar(candidate, correct);
+  });
+  const distractors = sample(others.length >= 3 ? others : allItems.filter(i => i.id !== item.id), 3);
 
   if (direction === 'target2he') {
     const options = shuffle([item.he, ...distractors.map(d => d.he)]);
