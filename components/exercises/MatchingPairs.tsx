@@ -32,14 +32,14 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
   const [wrongPair, setWrongPair] = useState<[string, string] | null>(null);
 
   const handleLeft = (id: string, text: string) => {
-    if (matched.has(id)) return;
+    if (matched.has(id) || wrongPair !== null) return;
     if (!reversed) speak(text, ttsLocale);
     setSelectedLeft(id);
     checkMatch(id, selectedRight);
   };
 
   const handleRight = (id: string, text: string) => {
-    if (matched.has(id)) return;
+    if (matched.has(id) || wrongPair !== null) return;
     if (reversed) speak(text, ttsLocale);
     setSelectedRight(id);
     checkMatch(selectedLeft, id);
@@ -58,11 +58,11 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
       }
     } else {
       setWrongPair([leftId, rightId]);
+      setSelectedLeft(null);
+      setSelectedRight(null);
       onWrong();
       setTimeout(() => {
         setWrongPair(null);
-        setSelectedLeft(null);
-        setSelectedRight(null);
       }, 600);
     }
   };
@@ -70,14 +70,15 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
   const getStyle = (id: string, side: 'left' | 'right') => {
     const isMatched = matched.has(id);
     const isSelected = side === 'left' ? selectedLeft === id : selectedRight === id;
-    const isWrong = isWrongItem(id);
+    const isWrong = wrongPair !== null && (side === 'left' ? wrongPair[0] === id : wrongPair[1] === id);
     if (isMatched) return 'bg-emerald-50 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-600 opacity-50 shadow-none';
     if (isWrong) return 'bg-red-50 border-red-400 dark:bg-red-950/40 dark:border-red-500 shadow-none';
     if (isSelected) return 'bg-violet-50 border-violet-500 dark:bg-violet-950/40 dark:border-violet-400 shadow-lg shadow-violet-100 dark:shadow-violet-900/20 ring-2 ring-violet-300/50 dark:ring-violet-500/30';
     return 'bg-card border-border shadow-sm hover:border-violet-400 hover:shadow-md hover:shadow-violet-50 dark:hover:shadow-violet-900/20 hover:-translate-y-0.5';
   };
 
-  const isWrongItem = (id: string) => !!(wrongPair && (wrongPair[0] === id || wrongPair[1] === id));
+  const isWrongItem = (id: string, side: 'left' | 'right') =>
+    wrongPair !== null && (side === 'left' ? wrongPair[0] === id : wrongPair[1] === id);
 
   const matchedCount = matched.size;
   const totalCount = exercise.pairs.length;
@@ -112,7 +113,7 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
               animate={
                 matched.has(item.id)
                   ? { opacity: 0.5, scale: [1, 1.06, 1], y: 0 }
-                  : isWrongItem(item.id)
+                  : isWrongItem(item.id, 'left')
                   ? { x: [0, -10, 10, -7, 7, 0], opacity: 1, y: 0 }
                   : { opacity: 1, scale: 1, y: 0 }
               }
@@ -146,7 +147,7 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
               animate={
                 matched.has(item.id)
                   ? { opacity: 0.5, scale: [1, 1.06, 1], y: 0 }
-                  : isWrongItem(item.id)
+                  : isWrongItem(item.id, 'right')
                   ? { x: [0, -10, 10, -7, 7, 0], opacity: 1, y: 0 }
                   : { opacity: 1, scale: 1, y: 0 }
               }
