@@ -56,7 +56,11 @@ export function OnboardingClient() {
       provider: 'google',
       options: { redirectTo: callbackUrl },
     });
-    if (error) { setError(error.message); setGoogleLoading(false); }
+    if (error) {
+      console.error('Google OAuth error:', error);
+      setError(error.message || 'שגיאה בהתחברות עם Google, נסה שוב');
+      setGoogleLoading(false);
+    }
     // on success the browser navigates away — no need to setGoogleLoading(false)
   };
 
