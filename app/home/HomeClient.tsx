@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { CategoryCard } from '@/components/CategoryCard';
@@ -26,9 +27,12 @@ export function HomeClient({ profile, langProgress, categories, levels, userProg
     return { ...cat, completedCount, totalLevels: catLevels.length, totalXp: totalXpCat, index: i };
   });
 
-  const hour     = new Date().getHours();
-  const greeting = hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : 'ערב טוב';
-  const name     = profile.display_name || 'לומד';
+  const [greeting, setGreeting] = useState('שלום');
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setGreeting(hour < 12 ? 'בוקר טוב' : hour < 17 ? 'צהריים טובים' : 'ערב טוב');
+  }, []);
+  const name = profile.display_name || 'לומד';
 
   const completedLevels = userProgress.filter(p => p.completed).length;
   const totalLevels     = levels.length;
@@ -52,7 +56,7 @@ export function HomeClient({ profile, langProgress, categories, levels, userProg
             </div>
             <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
               <motion.div
-                initial={{ width: 0 }}
+                initial={false}
                 animate={{ width: `${Math.min((totalXp % 500) / 5, 100)}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
                 className="h-full bg-yellow-400 rounded-full"
@@ -87,7 +91,7 @@ export function HomeClient({ profile, langProgress, categories, levels, userProg
         {/* Overall progress bar */}
         <div className="mt-4 h-2 bg-muted rounded-full overflow-hidden">
           <motion.div
-            initial={{ width: 0 }}
+            initial={false}
             animate={{ width: totalLevels > 0 ? `${(completedLevels / totalLevels) * 100}%` : '0%' }}
             transition={{ duration: 1.2, ease: 'easeOut' }}
             className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"

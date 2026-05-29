@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getLanguages } from '@/lib/supabase/cached-queries';
 import { LessonClient } from './LessonClient';
 import { buildLesson } from '@/lib/lesson-builder';
 
@@ -21,12 +22,13 @@ export default async function LessonPage({ params }: { params: Promise<{ levelId
   const user = session?.user;
   if (!user) redirect('/onboarding');
 
-  // Run all queries in parallel — use cookie langId optimistically (avoids profile waterfall)
-  const [{ data: level }, { data: vocab }, { data: language }] = await Promise.all([
+  // languages list is cached — no extra DB query needed
+  const [{ data: level }, { data: vocab }, languages] = await Promise.all([
     supabase.from('levels').select('*, categories(*)').eq('id', levelId).single(),
     supabase.from('vocabulary').select('*').eq('level_id', levelId).order('sort_order'),
-    supabase.from('languages').select('*').eq('id', cookieLangId).single(),
+    getLanguages(),
   ]);
+  const language = languages.find((l: { id: string }) => l.id === cookieLangId) ?? null;
 
   if (!vocab || vocab.length === 0) redirect('/home');
 

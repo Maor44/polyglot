@@ -198,7 +198,7 @@ export function LevelRoadmap({ levels, progress, categoryColor, onSelectLevel, a
             {isCompleted && (
               <motion.div
                 className="h-[3px]"
-                initial={{ scaleX: 0 }}
+                initial={false}
                 animate={{ scaleX: 1 }}
                 transition={{ delay: entryDelay + 0.35, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 style={{

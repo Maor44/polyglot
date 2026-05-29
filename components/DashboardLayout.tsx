@@ -66,7 +66,7 @@ export function DashboardLayout({ children, profile, langProgress, languages }: 
             </div>
             <div className="h-2 bg-white/20 rounded-full overflow-hidden">
               <motion.div
-                initial={{ width: 0 }}
+                initial={false}
                 animate={{ width: `${(xpInLevel / 500) * 100}%` }}
                 transition={{ duration: 1.2, ease: 'easeOut' }}
                 className="h-full bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full"

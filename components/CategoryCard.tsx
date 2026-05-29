@@ -75,7 +75,7 @@ export function CategoryCard({ id, name_he, emoji, color, completedCount, totalL
             <div className="h-1.5 bg-white/25 rounded-full overflow-hidden mb-2">
               <motion.div
                 className="h-full rounded-full bg-white"
-                initial={{ width: 0 }}
+                initial={false}
                 animate={{ width: `${pct}%` }}
                 transition={{ duration: 0.9, ease: 'easeOut', delay: index * 0.05 + 0.3 }}
               />
