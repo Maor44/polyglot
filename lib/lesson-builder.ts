@@ -41,10 +41,11 @@ function createMCExercise(
   }
 }
 
-function createMatchingExercise(items: VocabularyItem[]): MatchingExercise {
+function createMatchingExercise(items: VocabularyItem[], reversed = false): MatchingExercise {
   return {
     type: 'matching',
     pairs: items.map(i => ({ target: i.target_text, he: i.he, id: i.id })),
+    reversed,
   };
 }
 
@@ -87,22 +88,19 @@ export function buildLesson(vocabItems: VocabularyItem[]): Exercise[] {
   const exercises: Exercise[] = [];
   const phrases = vocabItems.filter(v => v.is_phrase);
   const shuffled = shuffle(vocabItems);
+  const pairCount = Math.min(5, shuffled.length);
 
-  // 1. Matching round (up to 5 pairs)
-  const matchingItems = sample(shuffled, Math.min(5, shuffled.length));
-  exercises.push(createMatchingExercise(matchingItems));
+  // 1. Matching round — target language on left
+  exercises.push(createMatchingExercise(sample(shuffled, pairCount)));
 
-  // 2-9. Mixed exercises
-  const pool = shuffled.slice(0, 7);
-  for (const item of pool) {
+  // 2-5. Mixed exercises (first half)
+  const pool1 = shuffled.slice(0, Math.min(4, shuffled.length));
+  for (const item of pool1) {
     const availableTypes: Array<'mc' | 'fill' | 'build'> = ['mc'];
-    if (item.is_phrase && phrases.length > 0) {
-      availableTypes.push('fill', 'build');
-    }
+    if (item.is_phrase && phrases.length > 0) availableTypes.push('fill', 'build');
     const type = randomChoice(availableTypes);
     if (type === 'mc') {
-      const dir = Math.random() < 0.6 ? 'target2he' : 'he2target';
-      exercises.push(createMCExercise(item, vocabItems, dir));
+      exercises.push(createMCExercise(item, vocabItems, 'target2he'));
     } else if (type === 'fill') {
       exercises.push(createFillExercise(item, vocabItems));
     } else {
@@ -110,10 +108,28 @@ export function buildLesson(vocabItems: VocabularyItem[]): Exercise[] {
     }
   }
 
-  // 10. Final MC he→target
+  // 6. Reversed matching round — Hebrew on left, target language on right
+  exercises.push(createMatchingExercise(sample(shuffled, pairCount), true));
+
+  // 7-10. Mixed exercises (second half, lean he→target)
+  const pool2 = shuffle(vocabItems).slice(0, Math.min(4, vocabItems.length));
+  for (const item of pool2) {
+    const availableTypes: Array<'mc' | 'fill' | 'build'> = ['mc'];
+    if (item.is_phrase && phrases.length > 0) availableTypes.push('fill', 'build');
+    const type = randomChoice(availableTypes);
+    if (type === 'mc') {
+      exercises.push(createMCExercise(item, vocabItems, 'he2target'));
+    } else if (type === 'fill') {
+      exercises.push(createFillExercise(item, vocabItems));
+    } else {
+      exercises.push(createBuildExercise(item));
+    }
+  }
+
+  // 11. Final MC he→target
   exercises.push(createMCExercise(randomChoice(shuffled), vocabItems, 'he2target'));
 
-  return exercises.slice(0, 10);
+  return exercises;
 }
 
 export function buildPlacementQuiz(vocabItems: VocabularyItem[]): MCExercise[] {

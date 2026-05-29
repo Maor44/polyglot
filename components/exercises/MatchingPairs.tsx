@@ -18,11 +18,13 @@ interface PairItem {
 }
 
 export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Props) {
+  const reversed = exercise.reversed ?? false;
+  // left = speaking side (target language) unless reversed
   const [leftItems] = useState<PairItem[]>(() =>
-    exercise.pairs.map(p => ({ id: p.id, text: p.target }))
+    exercise.pairs.map(p => ({ id: p.id, text: reversed ? p.he : p.target }))
   );
   const [rightItems] = useState<PairItem[]>(() =>
-    [...exercise.pairs].sort(() => Math.random() - 0.5).map(p => ({ id: p.id, text: p.he }))
+    [...exercise.pairs].sort(() => Math.random() - 0.5).map(p => ({ id: p.id, text: reversed ? p.target : p.he }))
   );
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
@@ -31,13 +33,14 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
 
   const handleLeft = (id: string, text: string) => {
     if (matched.has(id)) return;
-    speak(text, ttsLocale);
+    if (!reversed) speak(text, ttsLocale);
     setSelectedLeft(id);
     checkMatch(id, selectedRight);
   };
 
-  const handleRight = (id: string) => {
+  const handleRight = (id: string, text: string) => {
     if (matched.has(id)) return;
+    if (reversed) speak(text, ttsLocale);
     setSelectedRight(id);
     checkMatch(selectedLeft, id);
   };
@@ -77,10 +80,12 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
   return (
     <div className="flex flex-col gap-4">
       <p className="text-center text-sm text-muted-foreground font-medium">
-        חבר כל מילה לתרגום שלה • לחץ על הרומנית לשמוע 🔊
+        {reversed
+          ? 'חבר כל מילה לתרגום שלה • לחץ על הרומנית לשמוע 🔊'
+          : 'חבר כל מילה לתרגום שלה • לחץ על הרומנית לשמוע 🔊'}
       </p>
       <div className="grid grid-cols-2 gap-3">
-        {/* Left column — target language, tappable to speak */}
+        {/* Left column */}
         <div className="flex flex-col gap-2">
           {leftItems.map(item => (
             <motion.button
@@ -98,15 +103,15 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
               disabled={matched.has(item.id)}
               className={`${getStyle(item.id, 'left')} border-2 rounded-xl p-3 text-sm font-bold text-center transition-all min-h-[52px] flex items-center justify-between gap-1`}
             >
-              <span className="ltr-text flex-1 text-center">{item.text}</span>
-              {!matched.has(item.id) && (
+              <span className={`${reversed ? '' : 'ltr-text'} flex-1 text-center`}>{item.text}</span>
+              {!reversed && !matched.has(item.id) && (
                 <span className="text-xs opacity-40 flex-shrink-0">🔊</span>
               )}
             </motion.button>
           ))}
         </div>
 
-        {/* Right column — Hebrew */}
+        {/* Right column */}
         <div className="flex flex-col gap-2">
           {rightItems.map(item => (
             <motion.button
@@ -120,11 +125,16 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
               }
               transition={isWrongItem(item.id) ? { duration: 0.4 } : undefined}
               whileTap={matched.has(item.id) ? {} : { scale: 0.96 }}
-              onClick={() => handleRight(item.id)}
+              onClick={() => handleRight(item.id, item.text)}
               disabled={matched.has(item.id)}
-              className={`${getStyle(item.id, 'right')} border-2 rounded-xl p-3 text-sm font-bold text-center transition-all min-h-[52px] flex items-center justify-center`}
+              className={`${getStyle(item.id, 'right')} border-2 rounded-xl p-3 text-sm font-bold text-center transition-all min-h-[52px] flex items-center ${reversed ? 'justify-between gap-1' : 'justify-center'}`}
             >
-              {item.text}
+              {reversed ? (
+                <>
+                  <span className="ltr-text flex-1 text-center">{item.text}</span>
+                  {!matched.has(item.id) && <span className="text-xs opacity-40 flex-shrink-0">🔊</span>}
+                </>
+              ) : item.text}
             </motion.button>
           ))}
         </div>

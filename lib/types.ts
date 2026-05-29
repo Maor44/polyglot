@@ -79,6 +79,7 @@ export interface MCExercise {
 export interface MatchingExercise {
   type: 'matching';
   pairs: Array<{ target: string; he: string; id: string }>;
+  reversed?: boolean; // when true: left=Hebrew, right=target language
 }
 
 export interface FillExercise {
