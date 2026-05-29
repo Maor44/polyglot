@@ -1,21 +1,22 @@
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
 export default async function ProgressPage() {
-  const supabase = await createClient();
+  const [supabase, cookieStore] = await Promise.all([createClient(), cookies()]);
+  const cookieLangId = cookieStore.get('active_lang')?.value ?? 'ro';
+
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
   if (!user) redirect('/onboarding');
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const langId = profile?.active_language_id ?? 'ro';
-
-  const [{ data: langProgress }, { data: categories }, { data: levels }, { data: userProgress }, { data: languages }] = await Promise.all([
-    supabase.from('user_language_progress').select('*').eq('user_id', user.id).eq('language_id', langId).single(),
+  const [{ data: profile }, { data: langProgress }, { data: categories }, { data: levels }, { data: userProgress }, { data: languages }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('user_language_progress').select('*').eq('user_id', user.id).eq('language_id', cookieLangId).single(),
     supabase.from('categories').select('*').order('sort_order'),
-    supabase.from('levels').select('*').eq('language_id', langId),
+    supabase.from('levels').select('*').eq('language_id', cookieLangId),
     supabase.from('user_level_progress').select('*').eq('user_id', user.id),
     supabase.from('languages').select('*').order('sort_order'),
   ]);

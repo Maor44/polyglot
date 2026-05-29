@@ -19,6 +19,7 @@ export function LanguageSwitcher({ languages, activeLanguageId, userId }: Langua
 
   const switchLanguage = async (langId: string) => {
     setOpen(false);
+    document.cookie = `active_lang=${langId}; path=/; max-age=31536000; SameSite=Lax`;
     const supabase = createClient();
     await supabase.from('profiles').update({ active_language_id: langId }).eq('id', userId);
     router.refresh();

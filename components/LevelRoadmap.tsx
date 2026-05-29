@@ -8,6 +8,8 @@ interface LevelRoadmapProps {
   levels: Level[];
   progress: UserLevelProgress[];
   categoryColor: string;
+  onSelectLevel?: (levelId: string) => void;
+  activeLevelId?: string | null;
 }
 
 function getStars(score: number): number {
@@ -59,7 +61,7 @@ function Connector({ unlocked, color }: { unlocked: boolean; color: string }) {
   );
 }
 
-export function LevelRoadmap({ levels, progress, categoryColor }: LevelRoadmapProps) {
+export function LevelRoadmap({ levels, progress, categoryColor, onSelectLevel, activeLevelId }: LevelRoadmapProps) {
   return (
     <div className="flex flex-col py-2">
       {levels.map((level, i) => {
@@ -70,7 +72,143 @@ export function LevelRoadmap({ levels, progress, categoryColor }: LevelRoadmapPr
         const prevProg = prevLevel ? progress.find(p => p.level_id === prevLevel.id) : null;
         const isLocked = i > 0 && !(prevProg?.completed);
         const isCurrent = !isCompleted && !isLocked;
+        const isActive = activeLevelId === level.id;
         const entryDelay = i * 0.12;
+
+        const cardContent = (
+          <motion.div
+            whileHover={isLocked ? {} : { y: -3 }}
+            whileTap={isLocked ? {} : { scale: 0.985 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            className={`relative rounded-2xl border overflow-hidden transition-shadow cursor-pointer ${
+              isLocked
+                ? 'border-border/20 bg-muted/30 cursor-not-allowed'
+                : isActive
+                ? 'border-transparent bg-card'
+                : isCompleted
+                ? 'border-border/50 bg-card shadow-sm'
+                : 'border-transparent bg-card'
+            }`}
+            style={
+              isActive
+                ? { boxShadow: `0 0 0 2.5px ${categoryColor}, 0 8px 28px ${categoryColor}40` }
+                : isCurrent && !isActive
+                ? { boxShadow: `0 0 0 2px ${categoryColor}99, 0 8px 28px ${categoryColor}28` }
+                : isCompleted
+                ? { boxShadow: `0 2px 10px ${categoryColor}18` }
+                : {}
+            }
+          >
+            {/* Pulsing glow ring — only on current unlocked level, not while active */}
+            {isCurrent && !isActive && (
+              <motion.div
+                className="absolute inset-0 rounded-2xl pointer-events-none"
+                animate={{ opacity: [0.35, 0.75, 0.35] }}
+                transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
+                style={{ boxShadow: `inset 0 0 0 2px ${categoryColor}` }}
+              />
+            )}
+
+            {/* Playing indicator */}
+            {isActive && (
+              <motion.div
+                className="absolute inset-0 rounded-2xl pointer-events-none"
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                style={{ boxShadow: `inset 0 0 0 2.5px ${categoryColor}` }}
+              />
+            )}
+
+            <div className="flex items-center gap-3 p-4">
+              {/* Badge */}
+              <motion.div
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: isLocked ? 0.45 : 1 }}
+                transition={{ delay: entryDelay + 0.1, type: 'spring', stiffness: 360, damping: 22 }}
+                className="shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center shadow-md"
+                style={
+                  isLocked
+                    ? { background: '#e5e7eb' }
+                    : {
+                        background: `linear-gradient(150deg, ${categoryColor}ee 0%, ${categoryColor} 100%)`,
+                        boxShadow: `0 4px 14px ${categoryColor}55`,
+                      }
+                }
+              >
+                {isLocked ? (
+                  <span className="text-2xl select-none">🔒</span>
+                ) : isActive ? (
+                  <motion.span
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="text-xl font-black text-white leading-none"
+                  >
+                    ▶
+                  </motion.span>
+                ) : (
+                  <>
+                    <span className="text-xl font-black text-white leading-none">
+                      {level.level_number}
+                    </span>
+                    {isCompleted && (
+                      <span className="text-[11px] font-black text-white/80 mt-0.5 leading-none">✓</span>
+                    )}
+                  </>
+                )}
+              </motion.div>
+
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`text-[15px] font-black leading-tight truncate ${
+                    isLocked ? 'text-muted-foreground' : 'text-foreground'
+                  }`}
+                >
+                  {level.label_he}
+                </p>
+                <div className="mt-1.5">
+                  {isLocked ? (
+                    <span className="text-xs text-muted-foreground/70">השלם את הרמה הקודמת</span>
+                  ) : isActive ? (
+                    <span className="text-xs font-bold" style={{ color: categoryColor }}>משחק עכשיו...</span>
+                  ) : (
+                    <StarRow stars={stars} entryDelay={entryDelay + 0.2} />
+                  )}
+                </div>
+              </div>
+
+              {/* CTA */}
+              {!isLocked && !isActive && (
+                <motion.div
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: entryDelay + 0.25 }}
+                  className="shrink-0 rounded-xl px-3.5 py-2 text-xs font-black text-white shadow-sm"
+                  style={{
+                    background: `linear-gradient(135deg, ${categoryColor}cc, ${categoryColor})`,
+                    opacity: isCompleted ? 0.75 : 1,
+                  }}
+                >
+                  {isCompleted ? 'שוב' : 'התחל ▶'}
+                </motion.div>
+              )}
+            </div>
+
+            {/* Completion bar */}
+            {isCompleted && (
+              <motion.div
+                className="h-[3px]"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: entryDelay + 0.35, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  background: `linear-gradient(to left, ${categoryColor}cc, ${categoryColor}44)`,
+                  transformOrigin: 'right',
+                }}
+              />
+            )}
+          </motion.div>
+        );
 
         return (
           <div key={level.id}>
@@ -81,122 +219,24 @@ export function LevelRoadmap({ levels, progress, categoryColor }: LevelRoadmapPr
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: entryDelay, type: 'spring', stiffness: 280, damping: 26 }}
             >
-              <Link
-                href={isLocked ? '#' : `/lesson/${level.id}`}
-                className={isLocked ? 'pointer-events-none' : 'block'}
-                tabIndex={isLocked ? -1 : undefined}
-              >
-                <motion.div
-                  whileHover={isLocked ? {} : { y: -3 }}
-                  whileTap={isLocked ? {} : { scale: 0.985 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  className={`relative rounded-2xl border overflow-hidden transition-shadow ${
-                    isLocked
-                      ? 'border-border/20 bg-muted/30'
-                      : isCompleted
-                      ? 'border-border/50 bg-card shadow-sm'
-                      : 'border-transparent bg-card'
-                  }`}
-                  style={
-                    isCurrent
-                      ? { boxShadow: `0 0 0 2px ${categoryColor}99, 0 8px 28px ${categoryColor}28` }
-                      : isCompleted
-                      ? { boxShadow: `0 2px 10px ${categoryColor}18` }
-                      : {}
-                  }
+              {onSelectLevel ? (
+                <button
+                  className="w-full text-right"
+                  disabled={isLocked}
+                  onClick={() => !isLocked && onSelectLevel(level.id)}
                 >
-                  {/* Pulsing glow ring for active level */}
-                  {isCurrent && (
-                    <motion.div
-                      className="absolute inset-0 rounded-2xl pointer-events-none"
-                      animate={{ opacity: [0.35, 0.75, 0.35] }}
-                      transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
-                      style={{ boxShadow: `inset 0 0 0 2px ${categoryColor}` }}
-                    />
-                  )}
-
-                  <div className="flex items-center gap-3 p-4">
-                    {/* Badge */}
-                    <motion.div
-                      initial={{ scale: 0.6, opacity: 0 }}
-                      animate={{ scale: 1, opacity: isLocked ? 0.45 : 1 }}
-                      transition={{ delay: entryDelay + 0.1, type: 'spring', stiffness: 360, damping: 22 }}
-                      className="shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center shadow-md"
-                      style={
-                        isLocked
-                          ? { background: '#e5e7eb' }
-                          : {
-                              background: `linear-gradient(150deg, ${categoryColor}ee 0%, ${categoryColor} 100%)`,
-                              boxShadow: `0 4px 14px ${categoryColor}55`,
-                            }
-                      }
-                    >
-                      {isLocked ? (
-                        <span className="text-2xl select-none">🔒</span>
-                      ) : (
-                        <>
-                          <span className="text-xl font-black text-white leading-none">
-                            {level.level_number}
-                          </span>
-                          {isCompleted && (
-                            <span className="text-[11px] font-black text-white/80 mt-0.5 leading-none">✓</span>
-                          )}
-                        </>
-                      )}
-                    </motion.div>
-
-                    {/* Text content */}
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className={`text-[15px] font-black leading-tight truncate ${
-                          isLocked ? 'text-muted-foreground' : 'text-foreground'
-                        }`}
-                      >
-                        {level.label_he}
-                      </p>
-                      <div className="mt-1.5">
-                        {isLocked ? (
-                          <span className="text-xs text-muted-foreground/70">
-                            השלם את הרמה הקודמת
-                          </span>
-                        ) : (
-                          <StarRow stars={stars} entryDelay={entryDelay + 0.2} />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* CTA button */}
-                    {!isLocked && (
-                      <motion.div
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: entryDelay + 0.25 }}
-                        className="shrink-0 rounded-xl px-3.5 py-2 text-xs font-black text-white shadow-sm"
-                        style={{
-                          background: `linear-gradient(135deg, ${categoryColor}cc, ${categoryColor})`,
-                          opacity: isCompleted ? 0.75 : 1,
-                        }}
-                      >
-                        {isCompleted ? 'שוב' : 'התחל ▶'}
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Completion bar at bottom */}
-                  {isCompleted && (
-                    <motion.div
-                      className="h-[3px]"
-                      initial={{ scaleX: 0 }}
-                      animate={{ scaleX: 1 }}
-                      transition={{ delay: entryDelay + 0.35, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                      style={{
-                        background: `linear-gradient(to left, ${categoryColor}cc, ${categoryColor}44)`,
-                        transformOrigin: 'right',
-                      }}
-                    />
-                  )}
-                </motion.div>
-              </Link>
+                  {cardContent}
+                </button>
+              ) : (
+                <Link
+                  href={isLocked ? '#' : `/lesson/${level.id}`}
+                  className={isLocked ? 'pointer-events-none' : 'block'}
+                  tabIndex={isLocked ? -1 : undefined}
+                  prefetch={!isLocked}
+                >
+                  {cardContent}
+                </Link>
+              )}
             </motion.div>
           </div>
         );

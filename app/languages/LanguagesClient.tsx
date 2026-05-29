@@ -18,6 +18,7 @@ export function LanguagesClient({ languages, profile }: Props) {
     if (!lang.is_active) return;
     const supabaseClient = createClient();
     if (profile?.id) {
+      document.cookie = `active_lang=${lang.id}; path=/; max-age=31536000; SameSite=Lax`;
       await supabaseClient.from('profiles').update({ active_language_id: lang.id }).eq('id', profile.id);
       const { data: existing } = await supabaseClient
         .from('user_language_progress')

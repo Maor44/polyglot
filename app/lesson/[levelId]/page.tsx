@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/lib/supabase/server';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { LessonClient } from './LessonClient';
 import { buildLesson } from '@/lib/lesson-builder';
@@ -13,18 +14,18 @@ export default async function LessonPage({ params }: { params: Promise<{ levelId
     return <LessonAIClient />;
   }
 
-  const supabase = await createClient();
+  const [supabase, cookieStore] = await Promise.all([createClient(), cookies()]);
+  const cookieLangId = cookieStore.get('active_lang')?.value ?? 'ro';
+
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user;
   if (!user) redirect('/onboarding');
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-  const langId = profile?.active_language_id ?? 'ro';
-
+  // Run all queries in parallel — use cookie langId optimistically (avoids profile waterfall)
   const [{ data: level }, { data: vocab }, { data: language }] = await Promise.all([
     supabase.from('levels').select('*, categories(*)').eq('id', levelId).single(),
     supabase.from('vocabulary').select('*').eq('level_id', levelId).order('sort_order'),
-    supabase.from('languages').select('*').eq('id', langId).single(),
+    supabase.from('languages').select('*').eq('id', cookieLangId).single(),
   ]);
 
   if (!vocab || vocab.length === 0) redirect('/home');
@@ -36,7 +37,7 @@ export default async function LessonPage({ params }: { params: Promise<{ levelId
       exercises={exercises}
       levelId={levelId}
       userId={user.id}
-      languageId={langId}
+      languageId={cookieLangId}
       ttsLocale={language?.tts_locale ?? 'ro-RO'}
       levelLabel={(level as Record<string, unknown> & { label_he?: string })?.label_he ?? ''}
       categoryName={(level as Record<string, unknown> & { categories?: { name_he: string; emoji: string } })?.categories?.name_he ?? ''}
