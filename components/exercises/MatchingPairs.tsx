@@ -67,12 +67,12 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
   const getStyle = (id: string, side: 'left' | 'right') => {
     const isMatched = matched.has(id);
     const isSelected = side === 'left' ? selectedLeft === id : selectedRight === id;
-    const isWrong = wrongPair && (wrongPair[0] === id || wrongPair[1] === id);
     if (isMatched) return 'bg-green-100 border-green-500 dark:bg-green-950/40 opacity-60';
-    if (isWrong) return 'bg-red-100 border-red-500 dark:bg-red-950/40';
     if (isSelected) return 'bg-primary/10 border-primary ring-2 ring-primary/30';
     return 'bg-card border-border hover:border-primary hover:bg-primary/5';
   };
+
+  const isWrongItem = (id: string) => !!(wrongPair && (wrongPair[0] === id || wrongPair[1] === id));
 
   return (
     <div className="flex flex-col gap-4">
@@ -85,7 +85,14 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
           {leftItems.map(item => (
             <motion.button
               key={item.id}
-              animate={matched.has(item.id) ? { scale: [1, 1.05, 1] } : {}}
+              animate={
+                matched.has(item.id)
+                  ? { scale: [1, 1.05, 1] }
+                  : isWrongItem(item.id)
+                  ? { x: [0, -8, 8, -6, 6, 0] }
+                  : {}
+              }
+              transition={isWrongItem(item.id) ? { duration: 0.4 } : undefined}
               whileTap={matched.has(item.id) ? {} : { scale: 0.96 }}
               onClick={() => handleLeft(item.id, item.text)}
               disabled={matched.has(item.id)}
@@ -104,7 +111,14 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
           {rightItems.map(item => (
             <motion.button
               key={item.id}
-              animate={matched.has(item.id) ? { scale: [1, 1.05, 1] } : {}}
+              animate={
+                matched.has(item.id)
+                  ? { scale: [1, 1.05, 1] }
+                  : isWrongItem(item.id)
+                  ? { x: [0, -8, 8, -6, 6, 0] }
+                  : {}
+              }
+              transition={isWrongItem(item.id) ? { duration: 0.4 } : undefined}
               whileTap={matched.has(item.id) ? {} : { scale: 0.96 }}
               onClick={() => handleRight(item.id)}
               disabled={matched.has(item.id)}

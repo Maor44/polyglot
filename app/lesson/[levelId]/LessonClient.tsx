@@ -85,6 +85,15 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
     setTimeout(advance, 900);
   }, [hearts, advance]);
 
+  // For matching pairs: deduct a heart but stay on the same exercise
+  const handleMatchingWrong = useCallback(() => {
+    const newHearts = hearts - 1;
+    setHearts(newHearts);
+    if (newHearts <= 0) {
+      setGameOver(true);
+    }
+  }, [hearts]);
+
   const finishLesson = useCallback(async () => {
     const score = Math.round((correctCount / total) * 100);
     setFinalScore(score);
@@ -231,7 +240,7 @@ export function LessonClient({ exercises, levelId, userId, languageId, ttsLocale
               <MultipleChoice exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
             )}
             {exercise.type === 'matching' && (
-              <MatchingPairs exercise={exercise} ttsLocale={ttsLocale} onComplete={handleCorrect} onWrong={handleWrong} />
+              <MatchingPairs exercise={exercise} ttsLocale={ttsLocale} onComplete={handleCorrect} onWrong={handleMatchingWrong} />
             )}
             {exercise.type === 'fill' && (
               <FillBlank exercise={exercise} ttsLocale={ttsLocale} onCorrect={handleCorrect} onWrong={handleWrong} />
