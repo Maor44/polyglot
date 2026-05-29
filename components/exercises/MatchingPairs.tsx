@@ -118,7 +118,7 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
                   : { opacity: 1, scale: 1, y: 0 }
               }
               transition={
-                isWrongItem(item.id)
+                isWrongItem(item.id, 'left')
                   ? { duration: 0.4 }
                   : { delay: i * 0.04, duration: 0.25 }
               }
@@ -152,7 +152,7 @@ export function MatchingPairs({ exercise, ttsLocale, onComplete, onWrong }: Prop
                   : { opacity: 1, scale: 1, y: 0 }
               }
               transition={
-                isWrongItem(item.id)
+                isWrongItem(item.id, 'right')
                   ? { duration: 0.4 }
                   : { delay: i * 0.04 + 0.02, duration: 0.25 }
               }

@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -6,19 +7,18 @@ import { getCategories, getLanguages } from '@/lib/supabase/cached-queries';
 import { DashboardLayout } from '@/components/DashboardLayout';
 
 export default async function ProgressPage() {
+  const headerStore = await headers();
+  const userId = headerStore.get('x-user-id');
+  if (!userId) redirect('/onboarding');
+
   const [supabase, cookieStore] = await Promise.all([createClient(), cookies()]);
   const cookieLangId = cookieStore.get('active_lang')?.value ?? 'ro';
 
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
-  if (!user) redirect('/onboarding');
-
-  // categories and languages are cached — only user-specific queries hit the DB
   const [{ data: profile }, { data: langProgress }, { data: levels }, { data: userProgress }, categories, languages] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('user_language_progress').select('*').eq('user_id', user.id).eq('language_id', cookieLangId).single(),
+    supabase.from('profiles').select('*').eq('id', userId).single(),
+    supabase.from('user_language_progress').select('*').eq('user_id', userId).eq('language_id', cookieLangId).single(),
     supabase.from('levels').select('*').eq('language_id', cookieLangId),
-    supabase.from('user_level_progress').select('*').eq('user_id', user.id),
+    supabase.from('user_level_progress').select('*').eq('user_id', userId),
     getCategories(),
     getLanguages(),
   ]);
