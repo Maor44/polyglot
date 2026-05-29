@@ -5,7 +5,8 @@ import { PlacementClient } from './PlacementClient';
 
 export default async function PlacementPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) redirect('/onboarding');
 
   const { data: profile } = await supabase.from('profiles').select('*, languages(*)').eq('id', user.id).single();

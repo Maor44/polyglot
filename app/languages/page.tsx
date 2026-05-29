@@ -5,7 +5,8 @@ import { LanguagesClient } from './LanguagesClient';
 
 export default async function LanguagesPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) redirect('/onboarding');
 
   const { data: languages } = await supabase.from('languages').select('*').order('sort_order');
