@@ -39,7 +39,7 @@ export interface Level {
   id: string;
   language_id: string;
   category_id: string;
-  level_number: 1 | 2 | 3;
+  level_number: number;
   label_he: string;
   required_xp: number;
 }

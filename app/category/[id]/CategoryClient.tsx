@@ -132,20 +132,57 @@ export function CategoryClient({ category, levels, userProgress, language, userI
     <DashboardLayout profile={profile} langProgress={langProgress} languages={languages}>
 
       {/* ── Mobile header ── */}
-      <div className="lg:hidden sticky top-0 z-10 bg-card/95 backdrop-blur border-b border-border">
-        <div className="px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => router.back()}
-            className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-lg hover:bg-muted/80 transition-colors"
-            aria-label="חזרה"
-          >
-            ←
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{category.emoji}</span>
-            <h1 className="text-lg font-black">{category.name_he}</h1>
+      <div className="lg:hidden" style={{ background: `linear-gradient(160deg, ${color} 0%, ${color}cc 60%, ${color}99 100%)` }}>
+        <div className="relative overflow-hidden">
+          {/* Decorative circles */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-black/10 pointer-events-none" />
+
+          <div className="relative z-10 px-4 pt-4 pb-5">
+            {/* Top row: back + language */}
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => router.back()}
+                className="w-9 h-9 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-lg hover:bg-white/30 transition-colors"
+                aria-label="חזרה"
+              >
+                ←
+              </button>
+              <span className="text-white/70 text-sm font-medium">{language?.name_he ?? 'רומנית'}</span>
+            </div>
+
+            {/* Emoji + title */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl bg-white/20 backdrop-blur-sm shadow-lg shrink-0">
+                {category.emoji}
+              </div>
+              <h1 className="text-2xl font-black text-white leading-tight">{category.name_he}</h1>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {[
+                { label: 'רמות', value: levels.length },
+                { label: 'הושלמו', value: completedCount },
+                { label: 'התקדמות', value: `${pct}%` },
+              ].map((stat) => (
+                <div key={stat.label} className="rounded-xl p-2.5 text-center bg-white/20 backdrop-blur-sm">
+                  <p className="text-base font-black text-white leading-none">{stat.value}</p>
+                  <p className="text-white/70 text-[10px] mt-1 font-medium">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress bar */}
+            <div className="h-2 rounded-full overflow-hidden bg-white/20">
+              <motion.div
+                initial={false}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full rounded-full bg-white"
+              />
+            </div>
           </div>
-          <div className="w-9" />
         </div>
       </div>
 
@@ -251,7 +288,7 @@ export function CategoryClient({ category, levels, userProgress, language, userI
 
           {/* Mobile: AI button + roadmap */}
           <div className="lg:hidden">
-            <div className="px-4 pt-5 pb-3">
+            <div className="px-4 pt-4 pb-3">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={generateAILesson}
